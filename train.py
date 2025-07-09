@@ -100,7 +100,7 @@ trainer = Trainer(
 )
 
 # Start the training process
-trainer.train()
+trainer.train(resume_from_checkpoint=True)
 trainer.save_model("./model")
 tokenizer.save_pretrained("./model")
 
