@@ -1,39 +1,30 @@
+# app.py
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import gradio as gr
 
-
+# Load trained model and tokenizer
 model_path = "./model"
-
-tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
-model = AutoModelForSequenceClassification.from_pretrained(model_path, local_files_only=True)
-
 tokenizer = AutoTokenizer.from_pretrained(model_path)
 model = AutoModelForSequenceClassification.from_pretrained(model_path)
 model.eval()
 
-# Spam classifier function
-def classify_message(message: str):
-    inputs = tokenizer(message, return_tensors="pt", truncation=True, padding=True)
+def classify_message(message):
+    inputs = tokenizer(message, return_tensors="pt", truncation=True, padding=True, max_length=128)
     with torch.no_grad():
         outputs = model(**inputs)
         logits = outputs.logits
         prediction = torch.argmax(logits, dim=1).item()
-    return "SPAM" if prediction == 1 else "NOT SPAM"
+    return "🚨 SPAM" if prediction == 1 else "✅ Not Spam"
 
-# List of test messages to classify
-test_messages = [
-    "Congratulations! You've won a free iPhone. Click here to claim now!",
-    "Hey, are we still meeting for coffee tomorrow?",
-    "URGENT: Your bank account has been compromised. Act now!",
-    "Don't forget to bring the USB drive to class.",
-    "You've been selected for a $1000 Walmart gift card.",
-    "Bro, you up for the gym later?",
-    "Please update your account info to avoid suspension.",
-    "Family dinner tonight at 7 — see you there!",
-]
+# Gradio Interface
+demo = gr.Interface(
+    fn=classify_message,
+    inputs=gr.Textbox(lines=3, placeholder="Enter a message to classify..."),
+    outputs="text",
+    title="Spam Message Classifier",
+    description="DistilBERT-based model trained on multiple spam datasets to detect spam messages.",
+)
 
-# Classify each message
-print("📨 Message Classification Results:\n")
-for msg in test_messages:
-    result = classify_message(msg)
-    print(f"\"{msg}\" → {result}")
+if __name__ == "__main__":
+    demo.launch()
