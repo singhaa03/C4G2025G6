@@ -1,21 +1,36 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import torch
 
+# Initialize FastAPI app
 app = FastAPI()
 
-class ScanRequest(BaseModel):
+# Load model and tokenizer (make sure the model folder exists and has your model files)
+MODEL_PATH = "../model"
+tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
+model = AutoModelForSequenceClassification.from_pretrained(MODEL_PATH)
+model.eval()  # Set model to evaluation mode
+
+# Request body format
+class TextInput(BaseModel):
     text: str
 
-class ScanResponse(BaseModel):
-    verdict: str
+# Prediction endpoint
+@app.post("/predict")
+def predict(input: TextInput):
+    try:
+        # Tokenize the input
+        inputs = tokenizer(input.text, return_tensors="pt", truncation=True, padding=True)
 
-def fake_ai_detector(text: str) -> str:
-    if "bank" in text.lower():
-        return "phishing"
-    else:
-        return "safe"
+        # Run prediction
+        with torch.no_grad():
+            outputs = model(**inputs)
+            probs = torch.nn.functional.softmax(outputs.logits, dim=-1)
+            prediction = torch.argmax(probs, dim=1).item()
+            confidence = round(probs[0][prediction].item(), 4)
 
-@app.post("/scan", response_model=ScanResponse)
-async def scan_text(request: ScanRequest):
-    result = fake_ai_detector(request.text)
-    return {"verdict": result}
+        label = "phishing" if prediction == 1 else "not phishing"
+        return {"label": label, "confidence": confidence}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
