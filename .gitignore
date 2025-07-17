@@ -1,0 +1,22 @@
+# Ignore model files and folders
+model/
+model.zip
+cache/
+
+# Python virtual environment
+venv/
+.env
+
+# Bytecode files
+__pycache__/
+*.py[cod]
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+
+# Jupyter notebook checkpoints (if any)
+.ipynb_checkpoints/

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Phishing Detection</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 0 20px;
+    }
+    textarea {
+      width: 100%;
+      height: 120px;
+      font-size: 16px;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #result {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 5px;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    #result.phishing {
+      background-color: #ffdddd;
+      color: #d00;
+    }
+    #result.safe {
+      background-color: #ddffdd;
+      color: #070;
+    }
+    #error {
+      margin-top: 20px;
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <h1>Phishing Detection</h1>
+  <textarea id="inputText" placeholder="Paste your text here..."></textarea>
+  <br />
+  <button id="checkBtn">Check</button>
+
+  <div id="result"></div>
+  <div id="error"></div>
+
+  <script>
+    const checkBtn = document.getElementById('checkBtn');
+    const inputText = document.getElementById('inputText');
+    const resultDiv = document.getElementById('result');
+    const errorDiv = document.getElementById('error');
+
+    checkBtn.addEventListener('click', async () => {
+      const text = inputText.value.trim();
+      resultDiv.textContent = '';
+      resultDiv.className = '';
+      errorDiv.textContent = '';
+
+      if (!text) {
+        errorDiv.textContent = 'Please enter some text.';
+        return;
+      }
+
+      checkBtn.disabled = true;
+      checkBtn.textContent = 'Checking...';
+
+      try {
+        const response = await fetch('http://localhost:8000/predict', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ text })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const label = data.label || data.prediction || 'Unknown';
+
+        if (label.toLowerCase().includes('phishing')) {
+          resultDiv.textContent = `🚨 Result: ${label}`;
+          resultDiv.className = 'phishing';
+        } else {
+          resultDiv.textContent = `✅ Result: ${label}`;
+          resultDiv.className = 'safe';
+        }
+
+      } catch (err) {
+        errorDiv.textContent = `Error: ${err.message}`;
+      }
+
+      checkBtn.disabled = false;
+      checkBtn.textContent = 'Check';
+    });
+  </script>
+</body>
+</html>

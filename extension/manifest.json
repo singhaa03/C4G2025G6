@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Phishing Detector",
+  "version": "1.0",
+  "description": "Check if a message is phishing using AI.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Phishing Detector"
+  },
+  "permissions": [],
+  "host_permissions": ["http://127.0.0.1:8000/"]
+}

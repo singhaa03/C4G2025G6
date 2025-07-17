@@ -1,36 +1,50 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from pydantic import BaseModel
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
+from fastapi.middleware.cors import CORSMiddleware
+import os
 
-# Initialize FastAPI app
 app = FastAPI()
 
-# Load model and tokenizer (make sure the model folder exists and has your model files)
-MODEL_PATH = "../model"
+# Allow all origins for development (OK for local)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # allow everything (for now)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Load model and tokenizer
+MODEL_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "../model"))
 tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
 model = AutoModelForSequenceClassification.from_pretrained(MODEL_PATH)
-model.eval()  # Set model to evaluation mode
+model.eval()  # set model to eval mode
 
-# Request body format
+# Set up device
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model.to(device)
+
+# Define the input schema
 class TextInput(BaseModel):
     text: str
 
-# Prediction endpoint
 @app.post("/predict")
 def predict(input: TextInput):
-    try:
-        # Tokenize the input
-        inputs = tokenizer(input.text, return_tensors="pt", truncation=True, padding=True)
+    inputs = tokenizer(input.text, return_tensors="pt", truncation=True, padding=True, max_length=128)
+    inputs = {k: v.to(device) for k, v in inputs.items()}
 
-        # Run prediction
-        with torch.no_grad():
-            outputs = model(**inputs)
-            probs = torch.nn.functional.softmax(outputs.logits, dim=-1)
-            prediction = torch.argmax(probs, dim=1).item()
-            confidence = round(probs[0][prediction].item(), 4)
+    with torch.no_grad():
+        outputs = model(**inputs)
+        logits = outputs.logits
+        prediction = torch.argmax(logits, dim=1).item()
+        confidence = torch.softmax(logits, dim=1).max().item() * 100
 
-        label = "phishing" if prediction == 1 else "not phishing"
-        return {"label": label, "confidence": confidence}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    label = "Phishing" if prediction == 1 else "Not Phishing"
+
+    return {
+        "prediction": label,  # 👈 this must exist
+        "confidence": round(confidence, 2)
+    }
+
