@@ -1,29 +1,32 @@
 # C4G2025G6
 SPAM DETECTION AI EXTENSION
-
+* Type everything inside the quotations,NOT the quotations itself.
 Setup Instructions:
-1. Clone the repository
-2. git clone https://github.com/singhaa03/C4G2025G6.git
-cd C4G2025G6
-3. Set up Python environment
-bashpython -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-4. Download the trained model
-bashpython download_model.py
+1. To Clone the repository do this -> 
+2. Go to mac terminal then type, "git clone https://github.com/singhaa03/C4G2025G6.git"
+3. Then download vs code and type, cd C4G2025G6
+4. Set up Python environment:
+  - python -m venv venv
+  - source venv/bin/activate  # On Windows: venv\Scripts\activate
+  - pip install fastapi uvicorn transformers torch
+* THIS IS ALL YOU HAVE TO IMPORT, BUT IF There is a import error ask ChatGPT 
+5. Download the trained model by typing:
+  - "python download_model.py"
 This will automatically download and extract the model files to the model/ folder.
-5. Start the backend server
-bashcd backend
-uvicorn main:app --reload
-6. Load the browser extension
-
-Open Chrome and go to chrome://extensions/
-Enable "Developer mode"
-Click "Load unpacked"
-Select the extension folder from this project
+6. Start the backend server by typing :
+  - "cd backend" then,
+  - "uvicorn main:app --reload"
+7. Load the browser extension by :
+  - Open Chrome and go to chrome://extensions/
+  - Enable "Developer mode"
+  - Click "Load unpacked"
+  - Go to C4G2025G6 folder
+  - Select the extension folder from this project
 
 6. Test the application
+  - CLick on hte extensions Icon, and test it out!
 
+Structure(if needed): 
 The API will be running at http://127.0.0.1:8000
 Use the browser extension to test phishing detection
 
